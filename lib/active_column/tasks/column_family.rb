@@ -51,11 +51,11 @@ module ActiveColumn
 
       def create_index(cf_name, column_name, value_class)
         v_class = COMPARATOR_TYPES[value_class] || value_class
-        connection.create_index(@keyspace, cf_name, column_name, v_class)
+        connection.create_index(@keyspace.to_s, cf_name.to_s, column_name.to_s, v_class)
       end
       
       def drop_index(cf_name, column_name)
-        connection.drop_index(@keyspace, cf_name, column_name)
+        connection.drop_index(@keyspace.to_s, cf_name.to_s, column_name.to_s)
       end
       
       def drop(name)

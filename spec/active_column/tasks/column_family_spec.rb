@@ -144,6 +144,13 @@ describe ActiveColumn::Tasks::ColumnFamily do
         @cf_tasks.create_index("some_cf", "some_column", 'CrazyType')
       end
 
+      it 'transfer symbols to string' do
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'LongType')
+        @cf_tasks.create_index(:some_cf, :some_column, 'LongType')
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'CrazyType')
+        @cf_tasks.create_index(:some_cf, :some_column, 'CrazyType')
+      end
+
       # it 'creates secondary index' do
       #   @cf_tasks.create_index("some_cf", "some_column", :long)
       #   
@@ -153,6 +160,19 @@ describe ActiveColumn::Tasks::ColumnFamily do
       # end
     end
   end
+  
+  describe '.drop_secondary_index' do
+    context 'given a column family and column name and value type' do
+      it 'transfer symbols to string' do
+        @cf_tasks = ActiveColumn.column_family_tasks
+        ActiveColumn.connection.expects(:drop_index).with('active_column', 'some_cf', 'some_column')
+        @cf_tasks.drop_index("some_cf", "some_column")
+        ActiveColumn.connection.expects(:drop_index).with('active_column', 'some_cf', 'some_column')
+        @cf_tasks.drop_index(:some_cf, :some_column)
+      end
+    end
+  end
+  
 end
 
 def get_secondary_index(cf_name, name)

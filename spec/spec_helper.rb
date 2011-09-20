@@ -10,7 +10,7 @@ ActiveColumn::Migration.verbose = false
 
 Dir[ File.expand_path("../support/**/*.rb", __FILE__) ].each {|f| require f}
 
-thrift = { :retries => 3, :timeout => 2, :server_retry_period => nil }
+thrift = { :retries => 3, :timeout => 30, :server_retry_period => nil }
 $cassandra = ActiveColumn.connection = Cassandra.new('active_column', '127.0.0.1:9160', thrift)
 
 keyspace = 'active_column'
