@@ -49,6 +49,15 @@ module ActiveColumn
         connection.update_column_family(cf)
       end
 
+      def create_index(cf_name, column_name, value_class)
+        v_class = COMPARATOR_TYPES[value_class] || value_class
+        connection.create_index(@keyspace, cf_name, column_name, v_class)
+      end
+      
+      def drop_index(cf_name, column_name)
+        connection.drop_index(@keyspace, cf_name, column_name)
+      end
+      
       def drop(name)
         connection.drop_column_family(name.to_s)
       end

@@ -112,7 +112,55 @@ describe ActiveColumn::Tasks::ColumnFamily do
     end
   end
 
+  describe '.create_secondary_index' do
+    context 'given a column family and column name and value type' do
+      before :each do
+        @cf_tasks = ActiveColumn.column_family_tasks
+        
+        # if @cf_tasks.exists?("some_cf") 
+        #   @cf_tasks.drop("some_cf")
+        # end
+        # sleep 1
+        # @cf_tasks.create("some_cf") do |cf|
+        #   cf.comment = "foo"
+        #   cf.comparator_type = :utf8
+        # end
+        # 
+        # cassandra = @cf_tasks.send(:connection)
+        # cassandra.drop_index("active_column", "some_cf", "some_column")
+      end
+      
+      it 'translate type symbols to real types' do
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'BytesType')
+        @cf_tasks.create_index("some_cf", "some_column", :string)
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'LongType')
+        @cf_tasks.create_index("some_cf", "some_column", :long)
+      end
+      
+      it 'leave type as is if it can not find type translation' do
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'LongType')
+        @cf_tasks.create_index("some_cf", "some_column", 'LongType')
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'CrazyType')
+        @cf_tasks.create_index("some_cf", "some_column", 'CrazyType')
+      end
+
+      # it 'creates secondary index' do
+      #   @cf_tasks.create_index("some_cf", "some_column", :long)
+      #   
+      #   index = get_secondary_index("some_cf", 'some_column').first
+      #   index.should_not be_nil
+      #     index.validation_class.should == "org.apache.cassandra.db.marshal.LongType"
+      # end
+    end
+  end
 end
+
+def get_secondary_index(cf_name, name)
+  cassandra = @cf_tasks.send(:connection)
+  cf_def = cassandra.schema.cf_defs.find{|x| x.name == cf_name}
+  cf_def.column_metadata.select{|i| i.name == name}
+end
+
 
 
 def cf_attr(name, attribute)
