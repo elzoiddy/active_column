@@ -71,6 +71,25 @@ describe ActiveColumn::Tasks::Keyspace do
     end
   end
 
+  describe "#truncating_keyspace" do
+    context 'given a keypace' do
+      before :each do
+        @ks.drop :ks_schema_clearing_test if @ks.exists?(:ks_schema_clearing_test)
+        @ks.create :ks_schema_clearing_test
+        @ks.set :ks_schema_clearing_test
+        cf_tasks = ActiveColumn::Tasks::ColumnFamily.new :ks_schema_clearing_test
+        cf_tasks.create(:cf1) { |cf| cf.comment = 'foo' }
+        cf_tasks.create(:cf2) { |cf| cf.comment = 'bar' }
+        @cassandra = cf_tasks.send(:connection)
+      end
+      
+      it 'clear every column family but schema migrations' do
+        @ks.clear_all_but_schema_migration
+      end
+    end
+  end
+
+
   describe '#schema_dump' do
     context 'given a keyspace' do
       before do

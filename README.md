@@ -121,6 +121,28 @@ Update column family
   end
 </pre>
 
+Create secondary index
+
+<pre>
+  # you can use the built-in symbols in active column :long, :utf8 etc
+  create_index(:impressions, :count, :long)
+  # or use the input value type directly
+  create_index(:impressions, :count, "LongType")
+</pre>
+
+Drop secondary index
+<pre>
+  drop_index(:impressions, :count)
+</pre>
+
+Truncate all column families. 
+
+In test environment you might want to truncate every column family but the schema_migration column family.
+
+<pre>
+  rake ks:test:clear_keyspace
+</pre>
+
 One other thing to note is that you obviously must have Cassandra installed and running!  Please take a look at the
 [mama_cass gem](https://github.com/carbonfive/mama_cass) for a quick way to get up and running with Cassandra for
 development and testing.
