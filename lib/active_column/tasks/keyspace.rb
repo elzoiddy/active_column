@@ -59,7 +59,16 @@ module ActiveColumn
         return log 'Cannot clear system keyspace' if @cassandra.keyspace == 'system'
         @cassandra.clear_keyspace!
       end
-
+      
+      # truncate everything buy schema migration. 
+      def clear_all_but_schema_migration
+        return log 'Cannot clear system keyspace' if @cassandra.keyspace == 'system'
+        @cassandra.schema.cf_defs.each do |cfdef|
+          next if cfdef.name == "schema_migrations"
+          @cassandra.truncate!(cfdef.name) 
+        end
+      end
+      
       def schema_dump
         @cassandra.schema
       end
