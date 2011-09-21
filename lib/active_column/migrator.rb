@@ -61,7 +61,7 @@ module ActiveColumn
     end
 
     def self.migrations_path
-      'ks/migrate'
+      "ks/migrate/#{ActiveColumn::Helpers.migration_path}"
     end
 
     def self.schema_migrations_column_family

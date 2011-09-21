@@ -112,7 +112,96 @@ describe ActiveColumn::Tasks::ColumnFamily do
     end
   end
 
+  describe '.create_secondary_index' do
+    context 'given a column family and column name and value type' do
+      before :each do
+        @cf_tasks = ActiveColumn.column_family_tasks
+        
+        if @cf_tasks.exists?("some_cf") 
+          @cf_tasks.drop("some_cf")
+        end
+
+        @cf_tasks.create("some_cf") do |cf|
+          cf.comment = "foo"
+          cf.comparator_type = :utf8
+        end
+
+      end
+      
+      it 'translate type symbols to real types' do
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'BytesType')
+        @cf_tasks.create_index("some_cf", "some_column", :string)
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'LongType')
+        @cf_tasks.create_index("some_cf", "some_column", :long)
+      end
+      
+      it 'leave type as is if it can not find type translation' do
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'LongType')
+        @cf_tasks.create_index("some_cf", "some_column", 'LongType')
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'CrazyType')
+        @cf_tasks.create_index("some_cf", "some_column", 'CrazyType')
+      end
+
+      it 'transfer symbols to string' do
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'LongType')
+        @cf_tasks.create_index(:some_cf, :some_column, 'LongType')
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'CrazyType')
+        @cf_tasks.create_index(:some_cf, :some_column, 'CrazyType')
+      end
+
+      it 'creates secondary index' do
+        @cf_tasks.create_index("some_cf", "some_column", :long)
+        
+        index = get_secondary_index("some_cf", 'some_column').first
+        index.should_not be_nil
+          index.validation_class.should == "org.apache.cassandra.db.marshal.LongType"
+      end
+    end
+  end
+  
+  describe '.drop_secondary_index' do
+    context 'given a column family and column name and value type' do
+      it 'transfer symbols to string' do
+        @cf_tasks = ActiveColumn.column_family_tasks
+        ActiveColumn.connection.expects(:drop_index).with('active_column', 'some_cf', 'some_column')
+        @cf_tasks.drop_index("some_cf", "some_column")
+        ActiveColumn.connection.expects(:drop_index).with('active_column', 'some_cf', 'some_column')
+        @cf_tasks.drop_index(:some_cf, :some_column)
+      end
+    end
+  end
+  
+  describe '.waiting_for_schema_agreeemnt' do
+    context 'adding removing column family' do
+      before do 
+        @cf_tasks = ActiveColumn.column_family_tasks
+        if @cf_tasks.exists?("test_cf") 
+          @cf_tasks.drop("test_cf")
+        end
+      end
+      
+      it "times out after 30 seconds if there is no schema agreement" do
+        ActiveColumn.connection.expects(:schema_agreement?).times(30).returns(false)
+        lambda {@cf_tasks.create(:test_cf)}.should raise_error
+        ActiveColumn.connection.expects(:schema_agreement?).returns(true)
+      end
+      
+      after do
+        if @cf_tasks.exists?("test_cf") 
+          @cf_tasks.drop("test_cf")
+        end
+      end
+      
+    end
+  end
 end
+
+def get_secondary_index(cf_name, name)
+  cassandra = @cf_tasks.send(:connection)
+  cf_def = cassandra.schema.cf_defs.find{|x| x.name == cf_name}
+  cf_def.column_metadata.select{|i| i.name == name}
+end
+
 
 
 def cf_attr(name, attribute)

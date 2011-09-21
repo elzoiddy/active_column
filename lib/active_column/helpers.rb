@@ -1,6 +1,10 @@
 module ActiveColumn
   module Helpers
 
+    def self.migration_path
+      ENV['MIGRATION_PATH'] || ""
+    end
+
     def self.current_env
       ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
     end

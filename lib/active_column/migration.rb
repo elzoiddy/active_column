@@ -52,11 +52,25 @@ module ActiveColumn
     def self.create_column_family(name, &block)
       ActiveColumn.column_family_tasks.create(name, &block)
     end
-
+    
+    # update column family definition
     def self.update_column_family(name, &block)
       ActiveColumn.column_family_tasks.update(name, &block)
     end
 
+    # create index in the current keyspace
+    # create_index('Statuses', 'column_name', 'LongType')
+    # create_index('Statuses', 'column_name', :long)
+    def self.create_index(cf_name, column_name, value_class)
+      ActiveColumn.column_family_tasks.create_index(cf_name, column_name, value_class)
+    end
+
+    # drop index in current space
+    # create_index('Statuses', 'column_name' )
+    def self.drop_index(cf_name, column_name)
+      ActiveColumn.column_family_tasks.drop_index(cf_name, column_name)
+    end
+    
     # Drops the given column family
     def self.drop_column_family(name)
       ActiveColumn.column_family_tasks.drop(name)

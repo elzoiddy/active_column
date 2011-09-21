@@ -89,6 +89,12 @@ namespace :ks do
       schema_dump :development
       schema_load :test
     end
+    
+    desc "truncate/remove all rows on all column families in keyspace except schema_migration"
+    task :clear_keyspace => :configure do
+      keyspace_clear
+      puts "All Column family in keyspace truncated."
+    end
   end
 
   desc 'Retrieves the current schema version number'
@@ -126,6 +132,11 @@ namespace :ks do
       hash = JSON.parse(file.read(nil))
       ks.schema_load ActiveColumn::Tasks::Keyspace.parse(hash)
     end
+  end
+  
+  def keyspace_clear(env=ActiveColumn::Helpers.current_env)
+    ks = set_keyspace env
+    ks.clear_all_but_schema_migration
   end
 
   def set_keyspace(env = ActiveColumn::Helpers.current_env)

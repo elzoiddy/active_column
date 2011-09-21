@@ -55,6 +55,30 @@ describe ActiveColumn::Migration do
       end
     end
   end
+
+  describe '.create_seconddary_index' do
+    context 'given a column family and column name and value type' do
+      before do
+        ActiveColumn.connection.expects(:create_index).with('active_column', 'some_cf', 'some_column', 'LongType')
+      end
+
+      it 'creates secondary index' do
+        ActiveColumn::Migration.create_index("some_cf", "some_column", :long)
+      end
+    end
+  end
+
+  describe '.drop_seconddary_index' do
+    context 'given a column family and column name and value type' do
+      before do
+        ActiveColumn.connection.expects(:drop_index).with('active_column', 'some_cf', 'some_column')
+      end
+
+      it 'drop secondary index' do
+        ActiveColumn::Migration.drop_index("some_cf", "some_column")
+      end
+    end
+  end
   
   describe '.update_column_family' do
 
