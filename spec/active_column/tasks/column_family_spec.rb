@@ -120,7 +120,7 @@ describe ActiveColumn::Tasks::ColumnFamily do
         if @cf_tasks.exists?("some_cf") 
           @cf_tasks.drop("some_cf")
         end
-        sleep 1
+
         @cf_tasks.create("some_cf") do |cf|
           cf.comment = "foo"
           cf.comparator_type = :utf8
@@ -171,6 +171,29 @@ describe ActiveColumn::Tasks::ColumnFamily do
     end
   end
   
+  describe '.waiting_for_schema_agreeemnt' do
+    context 'adding removing column family' do
+      before do 
+        @cf_tasks = ActiveColumn.column_family_tasks
+        if @cf_tasks.exists?("test_cf") 
+          @cf_tasks.drop("test_cf")
+        end
+      end
+      
+      it "times out after 30 seconds if there is no schema agreement" do
+        ActiveColumn.connection.expects(:schema_agreement?).times(30).returns(false)
+        lambda {@cf_tasks.create(:test_cf)}.should raise_error
+        ActiveColumn.connection.expects(:schema_agreement?).returns(true)
+      end
+      
+      after do
+        if @cf_tasks.exists?("test_cf") 
+          @cf_tasks.drop("test_cf")
+        end
+      end
+      
+    end
+  end
 end
 
 def get_secondary_index(cf_name, name)
